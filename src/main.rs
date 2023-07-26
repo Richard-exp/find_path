@@ -1,8 +1,8 @@
 use::std::collections::VecDeque;
 
-const START: Pos = Pos{column: 0, row: 0};
-const FINISH: Pos = Pos{column: 3, row: 3};
-const SIZE: usize = 4;                    // square-matrix
+const START: Pos = Pos{row: 0, column: 0};
+const FINISH: Pos = Pos{row: 7, column: 5};
+const SIZE: usize = 10;                    // square-matrix
 
 #[derive(Clone, PartialEq)]
 struct Pos {
@@ -56,7 +56,7 @@ impl Neighbours {
         } else {
           self.visited.push(visited_neighbour);
           self.queue.push_back(neighbour.clone());
-          println!("{}, {}", neighbour.row, neighbour.column);
+          //println!("{}, {}", neighbour.row, neighbour.column);
         }
       } else {
         continue;
@@ -66,29 +66,43 @@ impl Neighbours {
         continue;
       }
     }
+    if current == FINISH {
+      return Err(());
+    };
     Ok(())
   } else {
-    Err(())
+  Err(())
   }
   }
 
   fn generate_path (&self) -> Vec<Pos> {
-
+    let mut path: Vec<Pos> = Vec::new();
+    let mut parent = FINISH;
+    while let Some(visited_node) = self.visited.iter().find(|vis| vis.node == parent){
+      path.push(visited_node.node.clone());
+      if visited_node.node == START {
+        break;
+      }
+      parent = visited_node.parent.clone();
+    }
+    path.iter().rev().map(|pos| pos.clone()).collect()
   }
 }
 
 
-
 fn main() {
-  let mut matrix:[[i32; SIZE];SIZE] = [[1; SIZE];SIZE];
-  matrix[1][1] = 0; matrix[1][2] = 0; matrix[0][3] = 0; matrix[2][1] = 0; matrix[2][3] = 0;
+  let matrix:[[i32; SIZE];SIZE] = [[1; SIZE];SIZE];
+  let matrix = square_obstacles(matrix, Pos {row: (7), column: (2)}, Pos { row: (3), column: (7)});
+  //matrix[1][1] = 0; matrix[1][2] = 0; matrix[0][3] = 0; matrix[2][1] = 0; matrix[2][3] = 0;
   show_matrix(matrix);
   let mut neighbours = Neighbours::new();
   neighbours.queue.push_back(START);
   neighbours.visited.push(Visited::new(START, START));
   while let Ok(()) = neighbours.check_clockwise(&matrix) {
   }
-  neighbours.generate_path
+  let path: Vec<Pos> = neighbours.generate_path();
+  println!();
+  path.iter().for_each(|pos| print!(" -> [{},{}]", pos.row, pos.column));
 }
 
 fn show_matrix (matrix:[[i32; SIZE];SIZE]) {
@@ -96,6 +110,15 @@ fn show_matrix (matrix:[[i32; SIZE];SIZE]) {
     for j in (0..SIZE) {
     print!("{} ",i[j])
     }
-    println!("");
+    println!();
   }
+}
+
+fn square_obstacles (mut matrix:[[i32; SIZE];SIZE], bottom_corner: Pos, top_corner: Pos) -> [[i32; SIZE];SIZE] {
+  for row in (top_corner.row..bottom_corner.row) {
+    for column in (bottom_corner.column..top_corner.column) {
+    matrix[row as usize][column as usize] = 0;
+    }
+  }
+  matrix
 }
