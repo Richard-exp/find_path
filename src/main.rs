@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 
 const START: Pos = Pos { row: 0, column: 0 };
-const FINISH: Pos = Pos { row: 3, column: 1 };
-const SIZE: usize = 10; // square-matrix
+const FINISH: Pos = Pos { row: 40, column: 30 };
+const SIZE: usize = 50; // square-matrix
 
 trait Matrix {
     fn new() -> Self;
@@ -56,41 +56,15 @@ impl Neighbours {
     }
     fn check_clockwise(&mut self, matrix: &[[i32; SIZE]; SIZE]) -> Result<&str, ()> {
         if let Some(current) = self.queue.pop_front() {
-            let iterator_arr: [Pos; 8] = [
-                Pos {
-                    row: current.row,
-                    column: current.column + 1,
-                },
-                Pos {
-                    row: current.row + 1,
-                    column: current.column + 1,
-                },
-                Pos {
-                    row: current.row + 1,
-                    column: current.column,
-                },
-                Pos {
-                    row: current.row + 1,
-                    column: current.column - 1,
-                },
-                Pos {
-                    row: current.row,
-                    column: current.column - 1,
-                },
-                Pos {
-                    row: current.row - 1,
-                    column: current.column - 1,
-                },
-                Pos {
-                    row: current.row - 1,
-                    column: current.column,
-                },
-                Pos {
-                    row: current.row - 1,
-                    column: current.column + 1,
-                },
-            ];
-
+            #[rustfmt::skip]
+            let iterator_arr: [Pos; 8] = [Pos {row: current.row, column: current.column + 1},
+                                          Pos {row: current.row + 1, column: current.column + 1},
+                                          Pos {row: current.row + 1, column: current.column},
+                                          Pos {row: current.row + 1, column: current.column - 1},
+                                          Pos {row: current.row, column: current.column - 1},
+                                          Pos {row: current.row - 1, column: current.column - 1},
+                                          Pos {row: current.row - 1, column: current.column},
+                                          Pos {row: current.row - 1, column: current.column + 1}];
             for neighbour in iterator_arr.iter() {
                 if !(neighbour.row >= 0
                     && neighbour.row < SIZE as i32
@@ -144,40 +118,38 @@ impl Neighbours {
 
 fn main() {
     let mut matrix = <[[i32; SIZE]; SIZE]>::new();
-    matrix.square_obstacle(
-        Pos {
-            row: (7),
-            column: (2),
-        },
-        Pos {
-            row: (3),
-            column: (7),
-        },
-    );
-    draw_matrix(matrix);
+    matrix.square_obstacle(Pos {row: (7), column: (2)}, Pos {row: (3), column: (7)});
+    matrix.square_obstacle(Pos {row: (7), column: (13)}, Pos {row: (3), column: (20)});
+    matrix.square_obstacle(Pos {row: (7), column: (30)}, Pos {row: (3), column: (45)});
+    matrix.square_obstacle(Pos {row: (40), column: (15)}, Pos {row: (15), column: (40)});
     let mut neighbours = Neighbours::new();
     neighbours.queue.push_back(START);
     neighbours.visited.push(Visited::new(START, START));
+    //while let Err(()) = neighbours.check_clockwise(&matrix) {}
     loop {
         match neighbours.check_clockwise(&matrix) {
             Err(()) => {}
             Ok(message) => {
-                print!("{message}");
+                println!("{message}");
                 break;
             }
         }
     }
     let path: Vec<Pos> = neighbours.generate_path();
-    println!();
+    draw_matrix(matrix, &path);
     path.iter()
         .for_each(|pos| print!(" -> [{},{}]", pos.row, pos.column));
 }
 
-fn draw_matrix(matrix: [[i32; SIZE]; SIZE]) {
-    for i in matrix {
+fn draw_matrix(matrix: [[i32; SIZE]; SIZE], path: &Vec<Pos>) {
+    for (i, val) in matrix.iter().enumerate() {
         for j in 0..SIZE {
-            print!("{} ", i[j])
+            if path.contains(&Pos {row: i as i32, column: j as i32}) {
+                print!("* ");
+            } else {
+            print!("{} ", val[j]) }
         }
         println!();
     }
+    println!();
 }
