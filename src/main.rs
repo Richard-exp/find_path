@@ -99,11 +99,11 @@ impl Neighbours {
                     self.visited.push(visited_neighbour);
                     self.queue.push_back(neighbour.clone());
                     //println!("{}, {}", neighbour.row, neighbour.column);
+                    if neighbour == &FINISH {
+                        return Err(());
+                    }
                 }
             }
-            // if current == FINISH {
-            //     return Err(());
-            // }
             Ok(())
         } else {
             Err(())
