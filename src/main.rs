@@ -1,8 +1,13 @@
 use std::collections::VecDeque;
 
 const START: Pos = Pos { row: 0, column: 0 };
-const FINISH: Pos = Pos { row: 7, column: 5 };
+const FINISH: Pos = Pos { row: 3, column: 1 };
 const SIZE: usize = 10; // square-matrix
+
+trait Matrix {
+    fn new() -> Self;
+    fn square_obstacle(&mut self, bottom_corner: Pos, top_corner: Pos);
+}
 
 #[derive(Clone, PartialEq)]
 struct Pos {
@@ -17,6 +22,20 @@ struct Visited {
 struct Neighbours {
     queue: VecDeque<Pos>,
     visited: Vec<Visited>,
+}
+
+impl Matrix for [[i32; SIZE]; SIZE] {
+    fn new() -> Self {
+        [[1; SIZE]; SIZE]
+    }
+
+    fn square_obstacle(&mut self, bottom_corner: Pos, top_corner: Pos) {
+        for row in top_corner.row..bottom_corner.row {
+            for column in bottom_corner.column..top_corner.column {
+                self[row as usize][column as usize] = 0;
+            }
+        }
+    }
 }
 
 impl Visited {
@@ -35,8 +54,7 @@ impl Neighbours {
             visited: Vec::new(),
         }
     }
-
-    fn check_clockwise(&mut self, matrix: &[[i32; SIZE]; SIZE]) -> Result<(), ()> {
+    fn check_clockwise(&mut self, matrix: &[[i32; SIZE]; SIZE]) -> Result<&str, ()> {
         if let Some(current) = self.queue.pop_front() {
             let iterator_arr: [Pos; 8] = [
                 Pos {
@@ -100,13 +118,13 @@ impl Neighbours {
                     self.queue.push_back(neighbour.clone());
                     //println!("{}, {}", neighbour.row, neighbour.column);
                     if neighbour == &FINISH {
-                        return Err(());
+                        return Ok("Path is: ");
                     }
                 }
             }
-            Ok(())
-        } else {
             Err(())
+        } else {
+            Ok("There is no solution")
         }
     }
 
@@ -125,9 +143,8 @@ impl Neighbours {
 }
 
 fn main() {
-    let matrix: [[i32; SIZE]; SIZE] = [[1; SIZE]; SIZE];
-    let matrix = square_obstacle(
-        matrix,
+    let mut matrix = <[[i32; SIZE]; SIZE]>::new();
+    matrix.square_obstacle(
         Pos {
             row: (7),
             column: (2),
@@ -137,35 +154,30 @@ fn main() {
             column: (7),
         },
     );
-    show_matrix(matrix);
+    draw_matrix(matrix);
     let mut neighbours = Neighbours::new();
     neighbours.queue.push_back(START);
     neighbours.visited.push(Visited::new(START, START));
-    while let Ok(()) = neighbours.check_clockwise(&matrix) {}
+    loop {
+        match neighbours.check_clockwise(&matrix) {
+            Err(()) => {}
+            Ok(message) => {
+                print!("{message}");
+                break;
+            }
+        }
+    }
     let path: Vec<Pos> = neighbours.generate_path();
     println!();
     path.iter()
         .for_each(|pos| print!(" -> [{},{}]", pos.row, pos.column));
 }
 
-fn show_matrix(matrix: [[i32; SIZE]; SIZE]) {
+fn draw_matrix(matrix: [[i32; SIZE]; SIZE]) {
     for i in matrix {
-        for j in (0..SIZE) {
+        for j in 0..SIZE {
             print!("{} ", i[j])
         }
         println!();
     }
-}
-
-fn square_obstacle(
-    mut matrix: [[i32; SIZE]; SIZE],
-    bottom_corner: Pos,
-    top_corner: Pos,
-) -> [[i32; SIZE]; SIZE] {
-    for row in (top_corner.row..bottom_corner.row) {
-        for column in (bottom_corner.column..top_corner.column) {
-            matrix[row as usize][column as usize] = 0;
-        }
-    }
-    matrix
 }
